@@ -1,0 +1,21 @@
+# Regras de exemplo. A primeira que casar vence. "padrao" é uma expressão regular, sem diferenciar maiúsculas.
+ignorar:                         # não é despesa: pagamento da fatura, transferência entre as próprias contas, investimento
+  - "PAGAMENTO DE FATURA|PGTO FATURA"
+  - "TRANSF.*MESMA TITULARIDADE"
+  - "APLICACAO|RESGATE"
+
+perguntar:                       # sempre confirmar com a pessoa
+  - padrao: "MARKETPLACE|LOJA ONLINE"
+    motivo: "O que foi comprado? A categoria muda a divisão"
+
+regras:
+  - {padrao: "ENERGIA|LUZ",           categoria: Casa,        descricao: Luz}
+  - {padrao: "INTERNET|FIBRA",        categoria: Casa,        descricao: Internet}
+  - {padrao: "ALUGUEL",               categoria: Casa,        descricao: Aluguel}
+  - {padrao: "SUPERMERCADO|MERCADO",  categoria: Mercado}
+  - {padrao: "PADARIA",               categoria: Mercado,     descricao: Padaria}
+  - {padrao: "POSTO|COMBUSTIVEL",     categoria: Transporte,  descricao: Combustível}
+  - {padrao: "PET ?SHOP|VETERINARIO", categoria: Pets}
+  - {padrao: "FARMACIA|DROGARIA",     categoria: Saúde}
+  - {padrao: "STREAMING|ASSINATURA",  categoria: Assinaturas, descricao: "Assinatura {parcela}"}
+  - {padrao: "SALARIO|PROVENTOS",     categoria: Receita,     descricao: Salário}

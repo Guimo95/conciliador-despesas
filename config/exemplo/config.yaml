@@ -1,0 +1,32 @@
+# Configuração de exemplo (pessoas fictícias). Copie a pasta config/exemplo para meus-dados/ e ajuste.
+titular: Ana                 # dono das contas conectadas
+pessoas: [Ana, Bruno]        # só o titular = uso individual, sem divisão
+moeda: "R$"
+
+divisao:
+  # individual    : tudo é do titular
+  # por_categoria : cada categoria tem a sua divisão; categoria sem regra usa o padrão
+  # igual         : toda despesa dividida igualmente entre as pessoas (menos as de sem_divisao)
+  modo: por_categoria
+  padrao: {Ana: 1}
+  categorias:
+    Casa: {Ana: 0.5, Bruno: 0.5}
+    Mercado: {Ana: 0.7, Bruno: 0.3}
+    Pets: {Ana: 0.5, Bruno: 0.5}
+  excecoes:                  # estabelecimento que foge da regra da categoria
+    - padrao: "PADARIA DO CENTRO"
+      divisao: {Ana: 0.5, Bruno: 0.5}
+  sem_divisao: [Saúde]       # usado no modo igual
+
+categorias_receita: [Receita]
+
+# Perfis de CSV exportado pelo banco (nome livre -> colunas do arquivo)
+perfis_csv:
+  fatura_exemplo:
+    data: "Data de Compra"
+    descricao: "Descrição"
+    valor: "Valor (em R$)"
+    parcela: "Parcela"
+    formato_data: "%d/%m/%Y"
+    separador: ";"
+    despesa_negativa: false  # na fatura a compra vem positiva

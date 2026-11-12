@@ -1,0 +1,5 @@
+[
+  {"value_date": "2026-11-02", "description": "POSTO CAMINHO", "amount": 150.0, "local_currency_amount": 150.0, "type": "OUTFLOW", "account": {"name": "Cartão"}},
+  {"value_date": "2026-11-03", "description": "ASSINATURA SOFTWARE", "amount": 10.0, "local_currency_amount": 54.32, "type": "OUTFLOW", "account": {"name": "Cartão"}},
+  {"value_date": "2026-11-04", "description": "ESTORNO SUPERMERCADO BOM PRECO", "amount": 20.0, "local_currency_amount": 20.0, "type": "INFLOW", "account": {"name": "Cartão"}}
+]
