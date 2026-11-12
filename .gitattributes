@@ -1,0 +1,3 @@
+# Hook e scripts de shell sempre com fim de linha LF, para rodar no Linux e no Mac
+.githooks/* text eol=lf
+*.sh text eol=lf
