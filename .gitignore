@@ -1,0 +1,10 @@
+# Dados da pessoa: nunca vão para o repositório
+meus-dados/
+*.ofx
+!exemplos/*.ofx
+.env
+
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
