@@ -1,0 +1,6 @@
+#!/bin/sh
+# Bloqueia o commit se aparecer dado pessoal. Ative uma vez com: git config core.hooksPath .githooks
+PY=python
+[ -x .venv/Scripts/python.exe ] && PY=.venv/Scripts/python.exe
+[ -x .venv/bin/python ] && PY=.venv/bin/python
+exec "$PY" scripts/verificar_dados_pessoais.py
