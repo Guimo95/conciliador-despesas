@@ -1,0 +1,6 @@
+# Contas fixas para os alertas (exemplo fictício). padrao = texto que aparece na descrição do banco.
+# valor é opcional: com ele, o pagamento precisa estar a até 15% (deixe sem valor as contas que variam muito).
+contas:
+  - {nome: Aluguel,  padrao: "ALUGUEL",  dia: 5,  valor: 2200, aviso_dias: 3}
+  - {nome: Luz,      padrao: "ENERGIA",  dia: 12, aviso_dias: 3}
+  - {nome: Internet, padrao: "INTERNET|FIBRA", dia: 15, valor: 120, aviso_dias: 2}

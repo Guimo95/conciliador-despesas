@@ -8,5 +8,5 @@ Rode em silêncio. Só fale com a pessoa se houver pergunta nova, alerta ou se f
 2. **Importar.** Para cada arquivo novo: `python -m despesas importar <arquivo> --conta "<nome da conta>"` (CSV também leva `--perfil`). O comando não duplica o que já existe.
 3. **Separar as perguntas.** O comando lista os lançamentos com pergunta. Antes de perguntar, veja se dá para resolver com o que você já sabe da pessoa (respostas anteriores, regras parecidas). O que sobrar vai para a lista de perguntas.
 4. **Aplicar respostas recebidas** desde a última rodada: grave em `respostas.yaml`, proponha regras quando fizer sentido e rode `python -m despesas reaplicar`.
-5. **Alertas de contas** (quando o `contas.yaml` existir): conta a vencer em até N dias sem pagamento, conta vencida e pagamento em dobro.
+5. **Alertas de contas** (quando o `contas.yaml` existir): `python -m despesas alertas` mostra conta a vencer em até N dias sem pagamento, conta vencida e pagamento em dobro.
 6. **Report:** se hoje é dia de report pelo `config.yaml`, siga `prompts/report.md`. Se não for, só avise a pessoa quando houver alerta de conta ou pergunta que muda muito a divisão.

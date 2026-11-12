@@ -8,6 +8,8 @@
     python -m despesas acerto
     python -m despesas painel               (gera meus-dados/painel.html)
     python -m despesas planilha             (gera meus-dados/despesas.xlsx)
+    python -m despesas alertas              (contas vencidas, a vencer e pagas em dobro)
+    python -m despesas report               (rascunho do report com os números do mês)
 """
 import argparse
 import sys
@@ -126,6 +128,28 @@ def cmd_painel(args, pasta):
     print(f"Painel gerado: {saida.resolve()} (abra no navegador)")
 
 
+def _hoje(args):
+    from datetime import date
+    return date.fromisoformat(args.hoje) if getattr(args, "hoje", "") else date.today()
+
+
+def cmd_alertas(args, pasta):
+    from .alertas import carregar_contas, duplicados, frases, verificar
+    cfg = carregar_config(pasta / "config.yaml")
+    contas = carregar_contas(pasta / "contas.yaml")
+    if not contas:
+        sys.exit("Sem contas.yaml: nada a verificar.")
+    livro = L.ler(pasta / "livro.csv")
+    linhas = frases(verificar(contas, livro, _hoje(args)), duplicados(contas, livro, _hoje(args)), cfg.moeda)
+    print("\n".join(linhas) if linhas else "Nenhum alerta de conta.")
+
+
+def cmd_report(args, pasta):
+    from .relatorio import montar, texto
+    cfg = carregar_config(pasta / "config.yaml")
+    print(texto(montar(pasta, cfg, _hoje(args), args.mes), cfg.moeda))
+
+
 def cmd_planilha(args, pasta):
     from .saidas import gerar_planilha
     cfg, _, _, receitas = _contexto(pasta)
@@ -152,10 +176,15 @@ def main(argv=None):
     p = sub.add_parser("painel")
     p.add_argument("--hoje", default="", help="data de referência AAAA-MM-DD (padrão: hoje)")
     sub.add_parser("planilha")
+    p = sub.add_parser("alertas")
+    p.add_argument("--hoje", default="")
+    p = sub.add_parser("report")
+    p.add_argument("--hoje", default="")
+    p.add_argument("--mes", default="")
     args = ap.parse_args(argv)
     pasta = Path(args.pasta)
     comandos = {"importar": cmd_importar, "reaplicar": cmd_reaplicar, "resumo": cmd_resumo, "acerto": cmd_acerto,
-                "painel": cmd_painel, "planilha": cmd_planilha}
+                "painel": cmd_painel, "planilha": cmd_planilha, "alertas": cmd_alertas, "report": cmd_report}
     try:
         comandos[args.comando](args, pasta)
     except (ErroConfig, FileNotFoundError, KeyError) as erro:
