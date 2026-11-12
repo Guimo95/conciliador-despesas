@@ -11,6 +11,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from . import livro as L
 from .config import Config
 from .divisao import acerto, frase_acerto
+from .notas import ler_notas, ligar
 
 RAIZ = Path(__file__).resolve().parent.parent
 MODELO_PAINEL = RAIZ / "painel" / "painel.html"
@@ -34,9 +35,16 @@ def montar_dados(pasta: Path, cfg: Config, receitas=("Receita",), hoje: date | N
                             "descricao": l["descricao"] or l["descricao_banco"], "conta": l.get("conta", ""),
                             "valor": round(sinal * float(l["valor"]), 2), "partes": partes.get(l["id"], {})})
     ultima = max((l["data"] for l in livro), default="")
+    notas, itens = ler_notas(pasta)
+    ligacoes = ligar(notas, livro)
+    lista_itens = [{"id_lancamento": ligacoes.get(i["nota"], ""), "nota": i["nota"], "descricao": i["descricao"],
+                    "quantidade": float(i["quantidade"] or 0), "unidade": i.get("unidade", ""),
+                    "valor_unitario": float(i["valor_unitario"] or 0), "valor_total": float(i["valor_total"] or 0),
+                    "tipo": i["tipo"]} for i in itens]
     return {"titular": cfg.titular, "pessoas": cfg.pessoas, "moeda": cfg.moeda, "tema": tema,
             "hoje": (hoje or date.today()).isoformat(), "dados_ate": ultima,
-            "lancamentos": lancamentos, "pendencias": pendencias}
+            "lancamentos": lancamentos, "pendencias": pendencias, "itens": lista_itens,
+            "notas_ligadas": len(ligacoes), "notas_total": len(notas)}
 
 
 def gerar_painel(dados: dict, saida: Path) -> Path:

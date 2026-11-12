@@ -1,0 +1,9 @@
+# Tipos de produto para os itens das notas (opcional). Um tipo por produto, sem olhar marca nem embalagem.
+tipos:
+  - {tipo: Feira,       padroes: ["BANANA", "TOMATE", "ALFACE", "CEBOLA", "BATATA", "MACA"]}
+  - {tipo: Laticínios,  padroes: ["LEITE", "QUEIJO", "IOGURTE", "MANTEIGA"]}
+  - {tipo: Padaria,     padroes: ["PAO", "BISNAGUINHA", "BOLO"]}
+  - {tipo: Carnes,      padroes: ["FRANGO", "CARNE", "PATINHO", "LINGUICA"]}
+  - {tipo: Limpeza,     padroes: ["DETERGENTE", "SABAO", "AMACIANTE", "DESINFETANTE"]}
+  - {tipo: Higiene,     padroes: ["SHAMPOO", "SABONETE", "PAPEL HIG", "CREME DENTAL"]}
+  - {tipo: Mercearia,   padroes: ["ARROZ", "FEIJAO", "MACARRAO", "OLEO", "CAFE", "ACUCAR"]}

@@ -85,6 +85,21 @@ tr.fora td { background:var(--alerta-fundo); color:var(--alerta-texto); }
       <div class="tabela"><table><thead id="t-cab"></thead><tbody id="t-corpo"></tbody></table></div>
     </section>
   </div>
+  <div class="linha2" id="bloco-itens" hidden>
+    <section class="bloco">
+      <h2>Compras com Nota</h2>
+      <p class="sub">Clique numa compra para ver os itens dela. Sem nota: o cupom ainda não foi enviado.</p>
+      <div class="tabela"><table><thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Situação</th></tr></thead>
+        <tbody id="c-corpo"></tbody></table></div>
+    </section>
+    <section class="bloco">
+      <h2>Itens da Compra</h2>
+      <p class="sub" id="i-sub">Todas as notas do período.</p>
+      <div class="grafico" id="g-tipo" role="img" aria-label="Gráfico de itens por tipo de produto" style="height:200px"></div>
+      <div class="tabela"><table><thead><tr><th>Produto</th><th>Tipo</th><th>Qtd.</th><th>Valor</th></tr></thead>
+        <tbody id="i-corpo"></tbody></table></div>
+    </section>
+  </div>
 </main>
 <script>/*__ECHARTS__*/</script>
 <script>
@@ -243,13 +258,53 @@ function desenharTabela(ls) {
   }).join("") : `<tr><td colspan="${colunas.length}" class="vazio">Nenhuma despesa no filtro</td></tr>`;
 }
 
+// Itens das compras com nota (opcional): só aparece se houver itens.
+const itens = D.itens || [];
+const comNota = new Set(itens.map(i => i.id_lancamento).filter(Boolean));
+const catsComNota = new Set(D.lancamentos.filter(l => comNota.has(l.id)).map(l => l.categoria));
+E.compra = "";
+function desenharItens(ls) {
+  const bloco = document.getElementById("bloco-itens");
+  bloco.hidden = !itens.length;
+  if (!itens.length) return;
+  const compras = ls.filter(l => catsComNota.has(l.categoria)).sort((a, b) => b.data.localeCompare(a.data));
+  const idsPeriodo = new Set(compras.map(l => l.id));
+  if (E.compra && !idsPeriodo.has(E.compra)) E.compra = "";
+  const qtd = id => itens.filter(i => i.id_lancamento === id).length;
+  document.getElementById("c-corpo").innerHTML = compras.length ? compras.map(l => {
+    const n = qtd(l.id);
+    return `<tr data-id="${l.id}" style="cursor:${n ? "pointer" : "default"}${E.compra === l.id ? ";font-weight:600" : ""}">` +
+           `<td class="data">${l.data.slice(8, 10)}/${l.data.slice(5, 7)}</td><td>${esc(l.descricao)}</td><td class="num">${fmt(l.valor)}</td>` +
+           `<td class="data">${n ? n + (n === 1 ? " item" : " itens") : "sem nota"}</td></tr>`;
+  }).join("") : '<tr><td colspan="4" class="vazio">Nenhuma compra no filtro</td></tr>';
+  const its = itens.filter(i => E.compra ? i.id_lancamento === E.compra : idsPeriodo.has(i.id_lancamento));
+  document.getElementById("i-sub").textContent = E.compra ? "Itens da compra selecionada (clique de novo para voltar a todas)." : "Todas as notas do período.";
+  const porTipo = new Map();
+  for (const i of its) porTipo.set(i.tipo, (porTipo.get(i.tipo) || 0) + i.valor_total);
+  const tipos = [...porTipo.entries()].sort((a, b) => a[1] - b[1]);
+  grafico("g-tipo").setOption({
+    grid: {left: 8, right: 70, top: 4, bottom: 4, containLabel: true}, xAxis: {type: "value", show: false},
+    yAxis: {type: "category", data: tipos.map(t => t[0]), axisLabel: {color: css("--texto")}, axisTick: {show: false}, axisLine: {show: false}},
+    tooltip: {trigger: "item", valueFormatter: v => fmt(v)},
+    series: [{type: "bar", barMaxWidth: 16, data: tipos.map(t => t[1]), itemStyle: {color: css("--serie")},
+              label: {show: true, position: "right", color: css("--texto"), fontSize: 11, formatter: p => fmt(p.value)}}]
+  }, true);
+  document.getElementById("i-corpo").innerHTML = its.length ? its.slice().sort((a, b) => b.valor_total - a.valor_total).map(i =>
+    `<tr><td>${esc(i.descricao)}</td><td>${esc(i.tipo)}</td><td class="num">${i.quantidade.toLocaleString("pt-BR")} ${esc(i.unidade)}</td>` +
+    `<td class="num">${fmt(i.valor_total)}</td></tr>`).join("") : '<tr><td colspan="4" class="vazio">Sem itens no filtro</td></tr>';
+}
+document.getElementById("c-corpo").addEventListener("click", ev => {
+  const tr = ev.target.closest("tr[data-id]"); if (!tr) return;
+  E.compra = E.compra === tr.dataset.id ? "" : tr.dataset.id; desenharItens(filtrados(false));
+});
+
 function desenhar() {
   const ms = mesesDoPeriodo();
   document.getElementById("titulo").textContent = "Despesas de " + (ms.length === 1 ? rotMes(ms[0]) : `${rotMes(ms[0])} a ${rotMes(ms.at(-1))}`)
     + (E.categoria ? " · " + E.categoria : "");
   document.getElementById("subtitulo").textContent = D.dados_ate ? `Dados até ${D.dados_ate.split("-").reverse().join("/")}` : "";
   const ls = filtrados(false);
-  desenharCartoes(ls); desenharEvolucao(ls); desenharCategorias(); desenharTabela(ls);
+  desenharCartoes(ls); desenharEvolucao(ls); desenharCategorias(); desenharTabela(ls); desenharItens(ls);
 }
 
 if (!D.lancamentos.length) {
