@@ -8,3 +8,7 @@ meus-dados/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# demonstração gerada pelo exemplos/gerar_demo.py
+demo/
+exemplos/demo_belvo.json

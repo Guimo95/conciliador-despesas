@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel de Despesas</title>
+<style>
+:root { --base:#1F3A4D; --base2:#2C5268; --destaque:#E0A100; --fundo:#F2F4F6; --cartao:#FFFFFF; --texto:#2B3B45; --suave:#6B7A84;
+        --borda:#E2E7EB; --alerta-fundo:#FDECEA; --alerta-texto:#9C2A22; --serie:var(--base); }
+[data-tema="gm"] { --base:#1B3A4B; --base2:#24506A; --destaque:#F0A500; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-claro]) { --fundo:#11181D; --cartao:#1A242B; --texto:#E4EAEE; --suave:#9AA8B1; --borda:#2A363E;
+                            --alerta-fundo:#3A1D1A; --alerta-texto:#F2A39B; --serie:#7FB2CF; }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--fundo); color:var(--texto); font:14px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif; }
+header { background:linear-gradient(90deg,var(--base),var(--base2)); color:#fff; border-bottom:3px solid var(--destaque);
+         padding:14px 20px; display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; justify-content:space-between; }
+header h1 { margin:0; font-size:20px; }
+header p { margin:2px 0 0; font-size:12px; opacity:.8; }
+.filtros { display:flex; gap:12px; flex-wrap:wrap; }
+.filtros label { font-size:10px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; display:flex; flex-direction:column; gap:3px; }
+.filtros select { font:inherit; font-size:13px; padding:6px 8px; border-radius:8px; border:0; min-width:150px; color:#1b1b1b; }
+main { max-width:1280px; margin:0 auto; padding:16px; display:grid; grid-template-columns:minmax(0,1fr); gap:14px; }
+.cartoes { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr)); gap:14px; }
+.cartao, .bloco { background:var(--cartao); border:1px solid var(--borda); border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.05); }
+.cartao { padding:12px 14px; text-align:center; border-top:3px solid var(--destaque); }
+.cartao h2 { margin:0; font-size:11px; letter-spacing:.06em; color:var(--suave); font-weight:600; }
+.cartao .valor { font-size:24px; font-weight:600; margin:4px 0 2px; }
+.cartao .sub { font-size:12px; color:var(--suave); }
+.bloco { padding:14px 16px; min-width:0; }
+.bloco h2 { margin:0; font-size:15px; }
+.bloco .sub { color:var(--suave); font-size:12px; margin:2px 0 8px; }
+.linha2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.7fr); gap:14px; }
+.botoes { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0; }
+.botoes button { font:inherit; font-size:12px; border:1px solid var(--borda); background:var(--cartao); color:var(--texto);
+                 padding:4px 10px; border-radius:6px; cursor:pointer; }
+.botoes button[aria-pressed="true"] { background:var(--base); color:#fff; border-color:var(--base); }
+.grafico { width:100%; height:260px; }
+#g-cat { height:300px; }
+.legenda { display:flex; gap:14px; font-size:12px; color:var(--suave); }
+.legenda i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:middle; }
+.tabela { max-height:330px; overflow:auto; }
+table { width:100%; border-collapse:collapse; font-size:12.5px; }
+th { position:sticky; top:0; background:var(--base); color:#fff; font-weight:600; padding:6px 8px; text-align:center; }
+td { padding:5px 8px; border-bottom:1px solid var(--borda); }
+td.num { text-align:right; white-space:nowrap; } td.data { text-align:center; white-space:nowrap; }
+tr.fora td { background:var(--alerta-fundo); color:var(--alerta-texto); }
+.filtro-ativo { font-size:12px; color:var(--suave); }
+.filtro-ativo button { font:inherit; font-size:12px; border:0; background:none; color:var(--base2); cursor:pointer; text-decoration:underline; }
+.vazio { color:var(--suave); padding:24px; text-align:center; }
+@media (max-width: 860px) { .linha2 { grid-template-columns:minmax(0,1fr); } header { padding:12px 16px; } main { padding:12px; }
+  .cartoes { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } .cartao .valor { font-size:19px; }
+  .filtros select { min-width:0; width:100%; } .filtros { width:100%; display:grid; grid-template-columns:1fr 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div><h1 id="titulo">Despesas</h1><p id="subtitulo"></p></div>
+  <div class="filtros">
+    <label>Período<select id="f-periodo" aria-label="Período"></select></label>
+    <label>Categoria<select id="f-categoria" aria-label="Categoria"></select></label>
+  </div>
+</header>
+<main>
+  <section class="cartoes" id="cartoes" aria-label="Indicadores"></section>
+  <section class="bloco">
+    <h2>Evolução das Despesas</h2>
+    <p class="sub">Escolha o formato (por período ou acumulado) e o agrupamento do eixo (dia, semana, mês ou ano).</p>
+    <div class="botoes" id="b-formato"></div>
+    <div class="botoes" id="b-eixo"></div>
+    <div class="grafico" id="g-evolucao" role="img" aria-label="Gráfico de evolução das despesas"></div>
+  </section>
+  <div class="linha2">
+    <section class="bloco">
+      <h2>Despesas por Categoria</h2>
+      <div class="legenda"><span><i style="background:var(--serie)"></i>Dentro do normal</span>
+        <span><i style="background:var(--destaque)"></i>Acima do normal (gasto variável 25% acima da média)</span></div>
+      <p class="sub">Clique numa barra para filtrar o painel por ela.</p>
+      <div class="grafico" id="g-cat" role="img" aria-label="Gráfico de despesas por categoria"></div>
+    </section>
+    <section class="bloco">
+      <h2>Detalhe de Despesas</h2>
+      <p class="sub">Do mais recente ao mais antigo. Em vermelho: valor bem acima do comum para a categoria.</p>
+      <div class="tabela"><table><thead id="t-cab"></thead><tbody id="t-corpo"></tbody></table></div>
+    </section>
+  </div>
+</main>
+<script>/*__ECHARTS__*/</script>
+<script>
+"use strict";
+const D = /*__DADOS__*/null;
+if (D.tema === "gm") document.documentElement.dataset.tema = "gm";
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const MESES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+const fmt = v => (D.moeda || "R$") + " " + v.toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const fmt0 = v => (D.moeda || "R$") + " " + Math.round(v).toLocaleString("pt-BR");
+const rotMes = m => MESES[+m.slice(5, 7) - 1] + "/" + m.slice(0, 4);
+const hoje = D.hoje, mesAtual = hoje.slice(0, 7);
+const diasNoMes = m => new Date(+m.slice(0, 4), +m.slice(5, 7), 0).getDate();
+const fracao = +hoje.slice(8, 10) / diasNoMes(mesAtual);
+const meses = [...new Set(D.lancamentos.map(l => l.data.slice(0, 7)))].sort();
+const completos = meses.filter(m => m < mesAtual);
+const categorias = [...new Set(D.lancamentos.map(l => l.categoria))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+const outros = D.pessoas.filter(p => p !== D.titular);
+// Despesa fixa: a mesma descrição aparece em pelo menos 80% dos meses completos (aluguel, luz, assinatura).
+// Ela não entra no "acima do normal", que olha só o gasto variável, como no painel original.
+const fixas = new Set();
+if (completos.length >= 2) {
+  const meses_por_desc = new Map();
+  for (const l of D.lancamentos) if (completos.includes(l.data.slice(0, 7)))
+    (meses_por_desc.get(l.descricao) || meses_por_desc.set(l.descricao, new Set()).get(l.descricao)).add(l.data.slice(0, 7));
+  for (const [d, ms] of meses_por_desc) if (ms.size / completos.length >= .8) fixas.add(d);
+}
+const variavel = l => !fixas.has(l.descricao);
+const E = {periodo: "atual", categoria: "", formato: "periodo", eixo: "Dia"};
+
+function mesesDoPeriodo() {
+  if (E.periodo === "atual") return [mesAtual];
+  if (E.periodo === "3m") return meses.slice(-3);
+  if (E.periodo === "tudo") return meses;
+  return [E.periodo];
+}
+function filtrados(ignorarCategoria) {
+  const ms = new Set(mesesDoPeriodo());
+  return D.lancamentos.filter(l => ms.has(l.data.slice(0, 7)) && (ignorarCategoria || !E.categoria || l.categoria === E.categoria));
+}
+const soma = (ls, f = l => l.valor) => ls.reduce((s, l) => s + f(l), 0);
+function mediaMensal(cat, so_variavel) {
+  if (!completos.length) return 0;
+  const ls = D.lancamentos.filter(l => completos.includes(l.data.slice(0, 7)) && (!cat || l.categoria === cat) && (!so_variavel || variavel(l)));
+  return soma(ls) / completos.length;
+}
+function esperado(cat, so_variavel) {
+  const ms = mesesDoPeriodo();
+  return mediaMensal(cat, so_variavel) * ms.reduce((s, m) => s + (m === mesAtual ? fracao : 1), 0);
+}
+
+function montarFiltros() {
+  const fp = document.getElementById("f-periodo");
+  const opcoes = [["atual", "Mês atual"], ["3m", "Últimos 3 meses"], ["tudo", "Tudo"]].concat(meses.slice().reverse().map(m => [m, rotMes(m)]));
+  fp.innerHTML = opcoes.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
+  fp.onchange = () => { E.periodo = fp.value; desenhar(); };
+  const fc = document.getElementById("f-categoria");
+  fc.innerHTML = '<option value="">Todas</option>' + categorias.map(c => `<option>${esc(c)}</option>`).join("");
+  fc.onchange = () => { E.categoria = fc.value; desenhar(); };
+  botoes("b-formato", [["periodo", "Por período"], ["acumulado", "Acumulado"]], "formato");
+  botoes("b-eixo", [["Dia", "Dia"], ["Semana", "Semana"], ["Mês", "Mês"], ["Ano", "Ano"]], "eixo");
+}
+function botoes(id, lista, chave) {
+  const el = document.getElementById(id);
+  el.innerHTML = lista.map(([v, t]) => `<button type="button" data-v="${v}" aria-pressed="${E[chave] === v}">${t}</button>`).join("");
+  el.onclick = ev => { const b = ev.target.closest("button"); if (!b) return; E[chave] = b.dataset.v;
+    el.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); desenhar(); };
+}
+function esc(t) { return String(t).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c])); }
+
+function desenharCartoes(ls) {
+  const total = soma(ls), esp = esperado(E.categoria);
+  const vs = esp ? total / esp - 1 : null;
+  const temAtual = mesesDoPeriodo().includes(mesAtual);
+  const proj = temAtual ? total + mediaMensal(E.categoria) * (1 - fracao) : null;
+  const pend = D.pendencias.filter(p => mesesDoPeriodo().includes(p.data.slice(0, 7)));
+  const cards = [["TOTAL GASTO", fmt(total), vs === null ? "Sem histórico para comparar" :
+                  `${vs >= 0 ? "+" : ""}${Math.round(vs * 100)}% vs. o esperado para o período (${fmt0(esp)})`]];
+  cards.push(proj === null ? ["MÉDIA MENSAL", fmt0(mediaMensal(E.categoria)), completos.length ? `${rotMes(completos[0])} a ${rotMes(completos.at(-1))}` : "Sem meses completos"]
+                           : ["PROJEÇÃO DO MÊS", fmt0(proj), `Média mensal: ${fmt0(mediaMensal(E.categoria))}`]);
+  for (const p of outros) cards.push([`PARTE DE ${p.toUpperCase()}`, fmt(soma(ls, l => l.partes[p] || 0)), "Pelas regras de divisão"]);
+  cards.push(["PENDÊNCIAS", pend.length ? String(pend.length) : "Nenhuma", pend.length ? "Lançamentos esperando resposta" : "Tudo classificado"]);
+  document.getElementById("cartoes").innerHTML = cards.map(([t, v, s]) =>
+    `<div class="cartao"><h2>${esc(t)}</h2><div class="valor">${esc(v)}</div><div class="sub">${esc(s)}</div></div>`).join("");
+}
+
+function chave(data) {
+  if (E.eixo === "Dia") return data;
+  if (E.eixo === "Mês") return data.slice(0, 7);
+  if (E.eixo === "Ano") return data.slice(0, 4);
+  const d = new Date(data + "T12:00:00"); d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+}
+function rotulo(k) {
+  if (E.eixo === "Dia") return k.slice(8, 10) + "/" + k.slice(5, 7);
+  if (E.eixo === "Semana") return "sem " + k.slice(8, 10) + "/" + k.slice(5, 7);
+  if (E.eixo === "Mês") return rotMes(k);
+  return k;
+}
+const graficos = {};
+function grafico(id) { return graficos[id] || (graficos[id] = echarts.init(document.getElementById(id))); }
+
+function desenharEvolucao(ls) {
+  const g = new Map();
+  for (const l of ls.slice().sort((a, b) => a.data.localeCompare(b.data))) g.set(chave(l.data), (g.get(chave(l.data)) || 0) + l.valor);
+  let acum = 0;
+  const ks = [...g.keys()], vs = ks.map(k => E.formato === "acumulado" ? (acum += g.get(k)) : g.get(k));
+  grafico("g-evolucao").setOption({
+    grid: {left: 8, right: 8, top: 24, bottom: 4, containLabel: true},
+    tooltip: {trigger: "axis", valueFormatter: v => fmt(v)},
+    xAxis: {type: "category", data: ks.map(rotulo), axisLabel: {color: css("--suave")}, axisLine: {lineStyle: {color: css("--borda")}}},
+    yAxis: {type: "value", show: false},
+    series: [{type: E.formato === "acumulado" ? "line" : "bar", data: vs, itemStyle: {color: css("--serie")},
+              lineStyle: {color: css("--serie")}, areaStyle: E.formato === "acumulado" ? {opacity: .08} : undefined, barMaxWidth: 46,
+              label: {show: ks.length <= 16, position: "top", color: css("--texto"), fontSize: 10, formatter: p => fmt(p.value)}}]
+  }, true);
+}
+
+function desenharCategorias() {
+  const ls = filtrados(true), g = new Map();
+  for (const l of ls) g.set(l.categoria, (g.get(l.categoria) || 0) + l.valor);
+  const lista = [...g.entries()].sort((a, b) => a[1] - b[1]);
+  const acima = c => { const e = esperado(c, true); return e > 0 && soma(ls.filter(l => l.categoria === c && variavel(l))) > 1.25 * e; };
+  const ch = grafico("g-cat");
+  ch.setOption({
+    grid: {left: 8, right: 70, top: 4, bottom: 4, containLabel: true},
+    tooltip: {trigger: "item", formatter: p => `${esc(p.name)}: ${fmt(p.value)}${acima(p.name) ? " (acima do normal)" : ""}`},
+    xAxis: {type: "value", show: false},
+    yAxis: {type: "category", data: lista.map(x => x[0]), axisLabel: {color: css("--texto")}, axisTick: {show: false}, axisLine: {show: false}},
+    series: [{type: "bar", barMaxWidth: 20, data: lista.map(([c, v]) => ({value: v, itemStyle: {
+              color: acima(c) ? css("--destaque") : css("--serie"), opacity: E.categoria && E.categoria !== c ? .35 : 1}})),
+              label: {show: true, position: "right", color: css("--texto"), fontSize: 11, formatter: p => fmt0(p.value)}}]
+  }, true);
+  ch.off("click");
+  ch.on("click", p => { E.categoria = E.categoria === p.name ? "" : p.name; document.getElementById("f-categoria").value = E.categoria; desenhar(); });
+}
+
+function desenharTabela(ls) {
+  // "Fora do normal": mais de 2,5 vezes o valor típico (mediana) da mesma descrição; sem histórico dela, da categoria.
+  const mediana = ls2 => { const v = ls2.filter(l => l.valor > 0).map(l => l.valor).sort((a, b) => a - b); return v[Math.floor(v.length / 2)]; };
+  const porDesc = new Map(), porCat = new Map();
+  for (const l of D.lancamentos) {
+    (porDesc.get(l.descricao) || porDesc.set(l.descricao, []).get(l.descricao)).push(l);
+    (porCat.get(l.categoria) || porCat.set(l.categoria, []).get(l.categoria)).push(l);
+  }
+  const tipico = l => (porDesc.get(l.descricao).length >= 3) ? mediana(porDesc.get(l.descricao))
+                    : (porCat.get(l.categoria).length >= 5 ? mediana(porCat.get(l.categoria)) : null);
+  const colunas = ["Descrição", "Categoria", "Data", "Valor"].concat(outros.map(p => "Parte de " + p));
+  document.getElementById("t-cab").innerHTML = "<tr>" + colunas.map(c => `<th>${esc(c)}</th>`).join("") + "</tr>";
+  const linhas = ls.slice().sort((a, b) => b.data.localeCompare(a.data));
+  document.getElementById("t-corpo").innerHTML = linhas.length ? linhas.map(l => {
+    const t = tipico(l), fora = t && l.valor > 2.5 * t;
+    return `<tr class="${fora ? "fora" : ""}"><td>${esc(l.descricao)}</td><td>${esc(l.categoria)}</td>` +
+           `<td class="data">${l.data.slice(8, 10)}/${l.data.slice(5, 7)}/${l.data.slice(0, 4)}</td><td class="num">${fmt(l.valor)}</td>` +
+           outros.map(p => `<td class="num">${l.partes[p] ? fmt(l.partes[p]) : "-"}</td>`).join("") + "</tr>";
+  }).join("") : `<tr><td colspan="${colunas.length}" class="vazio">Nenhuma despesa no filtro</td></tr>`;
+}
+
+function desenhar() {
+  const ms = mesesDoPeriodo();
+  document.getElementById("titulo").textContent = "Despesas de " + (ms.length === 1 ? rotMes(ms[0]) : `${rotMes(ms[0])} a ${rotMes(ms.at(-1))}`)
+    + (E.categoria ? " · " + E.categoria : "");
+  document.getElementById("subtitulo").textContent = D.dados_ate ? `Dados até ${D.dados_ate.split("-").reverse().join("/")}` : "";
+  const ls = filtrados(false);
+  desenharCartoes(ls); desenharEvolucao(ls); desenharCategorias(); desenharTabela(ls);
+}
+
+if (!D.lancamentos.length) {
+  document.querySelector("main").innerHTML = '<p class="vazio">Ainda não há despesas classificadas. Importe um extrato e rode o painel de novo.</p>';
+} else {
+  montarFiltros(); desenhar();
+  addEventListener("resize", () => Object.values(graficos).forEach(g => g.resize()));
+}
+</script>
+</body>
+</html>

@@ -6,6 +6,8 @@
     python -m despesas reaplicar            (depois de responder dúvidas ou criar regra)
     python -m despesas resumo --mes 2026-11
     python -m despesas acerto
+    python -m despesas painel               (gera meus-dados/painel.html)
+    python -m despesas planilha             (gera meus-dados/despesas.xlsx)
 """
 import argparse
 import sys
@@ -113,6 +115,27 @@ def cmd_acerto(args, pasta):
         print(frase)
 
 
+def cmd_painel(args, pasta):
+    from datetime import date
+
+    from .saidas import gerar_painel, montar_dados
+    cfg, _, _, receitas = _contexto(pasta)
+    tema = _yaml(pasta / "config.yaml").get("tema", "neutro")
+    hoje = date.fromisoformat(args.hoje) if args.hoje else None
+    saida = gerar_painel(montar_dados(pasta, cfg, receitas, hoje, tema), pasta / "painel.html")
+    print(f"Painel gerado: {saida.resolve()} (abra no navegador)")
+
+
+def cmd_planilha(args, pasta):
+    from .saidas import gerar_planilha
+    cfg, _, _, receitas = _contexto(pasta)
+    try:
+        saida = gerar_planilha(pasta, cfg, pasta / "despesas.xlsx", receitas)
+    except PermissionError:
+        sys.exit("A planilha está aberta no Excel. Feche e rode de novo.")
+    print(f"Planilha gerada: {saida.resolve()}")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="despesas", description="Conciliador de despesas")
     ap.add_argument("--pasta", default="meus-dados", help="pasta com config.yaml, regras.yaml e o livro (padrão: meus-dados)")
@@ -126,10 +149,15 @@ def main(argv=None):
     p = sub.add_parser("resumo")
     p.add_argument("--mes", default="")
     sub.add_parser("acerto")
+    p = sub.add_parser("painel")
+    p.add_argument("--hoje", default="", help="data de referência AAAA-MM-DD (padrão: hoje)")
+    sub.add_parser("planilha")
     args = ap.parse_args(argv)
     pasta = Path(args.pasta)
+    comandos = {"importar": cmd_importar, "reaplicar": cmd_reaplicar, "resumo": cmd_resumo, "acerto": cmd_acerto,
+                "painel": cmd_painel, "planilha": cmd_planilha}
     try:
-        {"importar": cmd_importar, "reaplicar": cmd_reaplicar, "resumo": cmd_resumo, "acerto": cmd_acerto}[args.comando](args, pasta)
+        comandos[args.comando](args, pasta)
     except (ErroConfig, FileNotFoundError, KeyError) as erro:
         sys.exit(f"Erro: {erro}")
 
